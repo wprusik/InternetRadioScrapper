@@ -13,6 +13,9 @@
 # IntellIJ IDEA files
 .idea/
 
+# target
+target/
+
 # Package Files #
 *.jar
 *.war
