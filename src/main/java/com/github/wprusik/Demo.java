@@ -17,7 +17,7 @@ public class Demo {
     }
 
     private static void fetchTest() {
-        List<RadioCategory> categories = new InternetRadioScrapper(DATA_DIRECTORY, 100).fetchAll();
+        List<RadioCategory> categories = new InternetRadioScrapper(DATA_DIRECTORY).fetchAll();
         print(categories);
     }
 
