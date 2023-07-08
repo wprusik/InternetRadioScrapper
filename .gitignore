@@ -15,6 +15,7 @@
 
 # target
 target/
+data/
 
 # Package Files #
 *.jar

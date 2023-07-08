@@ -5,11 +5,12 @@ import com.github.wprusik.radioscrapper.model.RadioCategory;
 import com.github.wprusik.radioscrapper.model.RadioStation;
 import lombok.SneakyThrows;
 
+import java.io.File;
 import java.util.List;
 
 public class Demo {
 
-    private static final String DATA_DIRECTORY = "C:/Users/Wojtek/Downloads/InternetRadio";
+    private static final String DATA_DIRECTORY = System.getProperty("user.dir") + File.separator + "data";
 
     public static void main(String... args) {
         fetchTest();

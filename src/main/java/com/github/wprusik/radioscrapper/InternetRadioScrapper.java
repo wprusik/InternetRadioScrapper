@@ -51,7 +51,7 @@ public class InternetRadioScrapper {
      */
     public List<RadioCategory> fetchAll(boolean redownload) {
         if (redownload) {
-            clearBaseDirectory();
+            clearWorkspace();
         }
         try (WebClient webClient = new WebClient(browserVersion)) {
             MenuCategory category = new MenuExtractor(webClient, BASE_URL, baseDirectory, delayBetweenDownloadsMillis).getListenCategory();
@@ -70,10 +70,10 @@ public class InternetRadioScrapper {
         return storageService.load();
     }
 
-    private void clearBaseDirectory() {
+    private void clearWorkspace() {
         if (baseDirectory != null) {
             StorageService storageService = new StorageService(baseDirectory);
-            storageService.clearBaseDirectory();
+            storageService.deleteBaseDirectory();
         }
     }
 }

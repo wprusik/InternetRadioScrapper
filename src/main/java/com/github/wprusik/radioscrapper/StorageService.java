@@ -17,7 +17,7 @@ import java.util.List;
 
 class StorageService {
 
-    private static final String CONFIG_FILENAME = "config.json";
+    private static final String CONFIG_FILENAME = "data.json";
 
     private final String baseDirectory;
     private final String playlistDirectory;
@@ -89,7 +89,8 @@ class StorageService {
         }
     }
 
-    public boolean clearBaseDirectory() {
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean deleteBaseDirectory() {
         File dir = new File(baseDirectory);
         if (!dir.isDirectory()) {
             throw new IllegalStateException();
@@ -97,7 +98,7 @@ class StorageService {
         if (dir.exists()) {
             File[] files = dir.listFiles();
             if (files != null) {
-                return Arrays.stream(files).allMatch(this::deleteFile);
+                return Arrays.stream(files).allMatch(this::deleteFile) && dir.delete();
             }
         }
         return false;
