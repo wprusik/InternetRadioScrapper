@@ -10,10 +10,7 @@ import org.htmlunit.html.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -49,17 +46,18 @@ class RadioCategoryExtractor {
     }
 
     private List<HtmlPage> getPages(HtmlPage page) throws IOException {
-        List<HtmlElement> pagination = page.getBody().getElementsByAttribute("ul", "class", "pagination");
-        if (pagination.isEmpty()) {
-            throw new IllegalStateException("Pagination element not found");
-        }
-        HtmlUnorderedList ul = (HtmlUnorderedList) pagination.get(0);
-        Map<Integer, URL> pageLinks = extractPageLinks(ul);
-
         List<HtmlPage> result = new ArrayList<>();
-        for (Map.Entry<Integer, URL> link : pageLinks.entrySet()) {
-            HtmlPage htmlpage = webClient.getPage(link.getValue());
-            result.add(htmlpage);
+        result.add(page);
+        List<HtmlElement> pagination = page.getBody().getElementsByAttribute("ul", "class", "pagination");
+
+        if (!pagination.isEmpty()) {
+            HtmlUnorderedList ul = (HtmlUnorderedList) pagination.get(0);
+            Map<Integer, URL> pageLinks = extractPageLinks(ul);
+
+            for (Map.Entry<Integer, URL> link : pageLinks.entrySet()) {
+                HtmlPage htmlpage = webClient.getPage(link.getValue());
+                result.add(htmlpage);
+            }
         }
         return result;
     }

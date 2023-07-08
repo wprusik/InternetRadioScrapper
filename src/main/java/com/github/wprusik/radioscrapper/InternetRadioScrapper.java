@@ -9,6 +9,9 @@ import org.htmlunit.WebClient;
 import javax.annotation.Nullable;
 import java.util.List;
 
+/**
+ * A scrapper for <a href="http://internet-radio.com">internet-radio.com</a> website
+ */
 @RequiredArgsConstructor
 public class InternetRadioScrapper {
 
