@@ -82,26 +82,39 @@ class MenuExtractor {
     }
 
     private MenuCategory buildMenuCategory(String categoryName, Map<String, String> subcategoryLinks) {
-        List<RadioCategory> subcategories = storageService != null ? storageService.load() : new ArrayList<>();
         if ("Listen".equalsIgnoreCase(categoryName)) {
-            for (Map.Entry<String, String> entry : subcategoryLinks.entrySet()) {
-                RadioCategory category = findSubcategoryByName(subcategories, entry.getKey())
-                        .orElseGet(() -> radioCategoryExtractor.getRadioCategory(entry.getKey(), entry.getValue()));
-
-                if (storageService != null) {
-                    category = storageService.storePlaylists(category);
-                    subcategories.add(category);
-                    storageService.save(subcategories);
-                } else {
-                    subcategories.add(category);
-                }
-            }
+            List<RadioCategory> subcategories = fetchRadioCategories(subcategoryLinks);
+            return new MenuCategory(categoryName, subcategories);
         }
-        return new MenuCategory(categoryName, subcategories);
+        return new MenuCategory(categoryName, Collections.emptyList());
     }
 
-    private Optional<RadioCategory> findSubcategoryByName(List<RadioCategory> categories, String name) {
-        return categories.stream().filter(c -> name.equalsIgnoreCase(c.name())).findAny();
+    private List<RadioCategory> fetchRadioCategories(Map<String, String> subcategoryLinks) {
+        List<RadioCategory> subcategories = storageService != null ? storageService.load() : new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : subcategoryLinks.entrySet()) {
+            if (isMissing(subcategories, entry.getKey())) {
+                RadioCategory category = fetchRadioCategory(entry.getKey(), entry.getValue());
+                subcategories.add(category);
+                store(subcategories);
+            }
+        }
+        return subcategories;
+    }
+
+    private RadioCategory fetchRadioCategory(String name, String link) {
+        RadioCategory category = radioCategoryExtractor.getRadioCategory(name, link);
+        return storageService != null ? storageService.storePlaylists(category) : category;
+    }
+
+    private void store(List<RadioCategory> subcategories) {
+        if (storageService != null) {
+            storageService.save(subcategories);
+        }
+    }
+
+    private boolean isMissing(List<RadioCategory> categories, String name) {
+        return categories.stream().noneMatch(c -> name.equalsIgnoreCase(c.name()));
     }
 
     private Map<String, String> extractLinks(HtmlUnorderedList ul) {
