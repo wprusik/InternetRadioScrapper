@@ -86,14 +86,15 @@ class RadioStationExtractor {
     private Optional<List<String>> extractGenres(HtmlTableDataCell cell) {
         AtomicBoolean genresBegan = new AtomicBoolean();
 
-        List<String> genres = StreamSupport.stream(cell.getChildElements().spliterator(), false)
+        List<String> genres = StreamSupport.stream(cell.getChildren().spliterator(), false)
                 .map(el -> el.getTextContent().trim())
                 .peek(text -> {
                     if (text.startsWith("Genres:")) {
                         genresBegan.set(true);
                     }
                 })
-                .filter(text -> genresBegan.get() && !text.startsWith("Genres:"))
+                .filter(text -> genresBegan.get())
+                .map(text -> text.replace("Genres: ", ""))
                 .map(text -> text.replace("\n", "").replace("\t", ""))
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
