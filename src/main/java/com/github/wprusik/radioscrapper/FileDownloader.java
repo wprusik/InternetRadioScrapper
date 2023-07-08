@@ -53,12 +53,12 @@ class FileDownloader {
         } catch (ConnectException e) {
             printWarning(url, e);
             if (++failedCount > 10) {
-                throw new UncheckedIOException(e);
+                throw e;
             }
         } catch (FailingHttpStatusCodeException e) {
             printWarning(url, e);
             if (++failedCount > 10) {
-                throw new RuntimeException(e.getMessage(), e);
+                throw e;
             }
             if (e.getStatusCode() == 400 && url.toString().contains("http:")) {
                 url = createURL(url.toString().replace("http:", "https:"));
