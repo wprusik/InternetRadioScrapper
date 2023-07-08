@@ -39,6 +39,8 @@ class BaseExtractor {
         List<String> genres = categoryLinks.keySet().stream().sorted(Comparator.comparingInt(String::length).reversed()).toList();
         RadioCategoryExtractor radioCategoryExtractor = new RadioCategoryExtractor(webClient, baseUrl, genres);
 
+        System.out.println("Loaded radio categories: " + categories.size() + "/" + genres.size());
+
         for (Map.Entry<String, String> entry : categoryLinks.entrySet()) {
             if (isMissing(categories, entry.getKey())) {
                 System.out.printf("\nRetrieving radio category %d/%d: %s\n", (categories.size() + 1), genres.size(), entry.getKey());
