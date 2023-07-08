@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -22,7 +23,6 @@ class RadioCategoryExtractor {
 
     private final WebClient webClient;
     private final String baseUrl;
-    private final int delayBetweenDownloads;
     private final List<String> availableGenres;
 
     @SneakyThrows
@@ -30,8 +30,12 @@ class RadioCategoryExtractor {
         HtmlPage page = webClient.getPage(baseUrl + uri);
         String description = extractDescription(page);
         List<HtmlPage> pages = getPages(page);
+
+        System.out.println("Found " + pages.size() + " pages:");
+        AtomicInteger pageNumber = new AtomicInteger(0);
+
         List<RadioStation> stations = pages.stream()
-                .map(this::extractRadioStations)
+                .map(p -> extractRadioStations(p, pageNumber.incrementAndGet(), pages.size()))
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
         return new RadioCategory(name, description, stations);
@@ -90,16 +94,17 @@ class RadioCategoryExtractor {
     }
 
     @SneakyThrows
-    private List<RadioStation> extractRadioStations(HtmlPage page) {
+    private List<RadioStation> extractRadioStations(HtmlPage page, int pageNumber, int pagesCount) {
         HtmlTableBody tbody = getTableBody(page);
         List<HtmlTableRow> rows = extractRows(tbody);
         List<RadioStation> result = new ArrayList<>();
         RadioStationExtractor radioStationExtractor = new RadioStationExtractor(webClient, baseUrl, availableGenres);
-        for (HtmlTableRow row : rows) {
-            radioStationExtractor.extractRadioInfo(row).ifPresent(result::add);
-            if (delayBetweenDownloads > 0) {
-                Thread.sleep(delayBetweenDownloads);
-            }
+
+        System.out.println("\tPage " + pageNumber + "/" + pagesCount);
+
+        for (int i = 0; i < rows.size(); i++) {
+            System.out.println("\t\tRetrieving station " + (i + 1) + "/" + rows.size());
+            radioStationExtractor.extractRadioInfo(rows.get(i)).ifPresent(result::add);
         }
         return result;
     }

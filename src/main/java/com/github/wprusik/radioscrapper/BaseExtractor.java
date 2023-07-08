@@ -16,14 +16,12 @@ class BaseExtractor {
 
     private final WebClient webClient;
     private final String baseUrl;
-    private final int delayBetweenDownloads;
     private final @Nullable StorageService storageService;
 
-    public BaseExtractor(WebClient webClient, String baseUrl, String baseDirectory, int delayBetweenDownloads) {
+    public BaseExtractor(WebClient webClient, String baseUrl, String baseDirectory) {
         this.webClient = webClient;
         this.baseUrl = baseUrl;
         this.storageService = baseDirectory != null ? new StorageService(baseDirectory) : null;
-        this.delayBetweenDownloads = delayBetweenDownloads;
     }
 
     @SneakyThrows
@@ -39,10 +37,11 @@ class BaseExtractor {
     private List<RadioCategory> fetchRadioCategories(Map<String, String> categoryLinks) {
         List<RadioCategory> categories = storageService != null ? storageService.load() : new ArrayList<>();
         List<String> genres = categoryLinks.keySet().stream().sorted(Comparator.comparingInt(String::length).reversed()).toList();
-        RadioCategoryExtractor radioCategoryExtractor = new RadioCategoryExtractor(webClient, baseUrl, delayBetweenDownloads, genres);
+        RadioCategoryExtractor radioCategoryExtractor = new RadioCategoryExtractor(webClient, baseUrl, genres);
 
         for (Map.Entry<String, String> entry : categoryLinks.entrySet()) {
             if (isMissing(categories, entry.getKey())) {
+                System.out.printf("\nRetrieving radio category %d/%d: %s\n", (categories.size() + 1), genres.size(), entry.getKey());
                 RadioCategory category = fetchRadioCategory(radioCategoryExtractor, entry.getKey(), entry.getValue());
                 categories.add(category);
                 store(categories);
