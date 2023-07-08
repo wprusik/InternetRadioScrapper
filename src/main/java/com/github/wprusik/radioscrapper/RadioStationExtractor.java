@@ -6,23 +6,27 @@ import org.htmlunit.WebClient;
 import org.htmlunit.html.*;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 class RadioStationExtractor {
 
+    private final static Pattern KBPS_PATTERN = Pattern.compile("(?<number>\\d+)[ ](Kbps)");
+    private final static Pattern GENRES_PATTERN = Pattern.compile("(Genres: )(?<genres>(\\w+)[ ]?(((\\w+[ ])+)?\\w+)?)");
+
     private final String baseUrl;
     private final FileDownloader fileDownloader;
-    private final Pattern kbpsPattern = Pattern.compile("(?<number>\\d+)[ ](Kbps)");
+    private final List<String> availableGenres;
 
-    public RadioStationExtractor(WebClient webClient, String baseUrl) {
+    public RadioStationExtractor(WebClient webClient, String baseUrl, List<String> availableGenres) {
         this.baseUrl = baseUrl;
         this.fileDownloader = new FileDownloader(webClient);
+        this.availableGenres = availableGenres;
     }
 
     Optional<RadioStation> extractRadioInfo(HtmlTableRow row) {
@@ -84,22 +88,27 @@ class RadioStationExtractor {
     }
 
     private Optional<List<String>> extractGenres(HtmlTableDataCell cell) {
-        AtomicBoolean genresBegan = new AtomicBoolean();
+        Matcher matcher = GENRES_PATTERN.matcher(cell.getTextContent());
+        if (matcher.find()) {
+            List<String> genres = new ArrayList<>();
+            String genresLine = matcher.group("genres");
 
-        List<String> genres = StreamSupport.stream(cell.getChildren().spliterator(), false)
-                .map(el -> el.getTextContent().trim())
-                .peek(text -> {
-                    if (text.startsWith("Genres:")) {
-                        genresBegan.set(true);
-                    }
-                })
-                .filter(text -> genresBegan.get())
-                .map(text -> text.replace("Genres: ", ""))
-                .map(text -> text.replace("\n", "").replace("\t", ""))
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList());
-
-        return Optional.of(genres);
+            for (String genre : availableGenres) {
+                if (genresLine.contains(genre)) {
+                    genres.add(genre);
+                    genresLine = genresLine.replace(genre, "");
+                }
+            }
+            if (StringUtils.isNotBlank(genresLine)) {
+                String[] unrecognizedGenres = genresLine.trim().split(" ");
+                Arrays.stream(unrecognizedGenres)
+                        .map(String::trim)
+                        .filter(s -> s.length() > 2)
+                        .forEach(genres::add);
+            }
+            return Optional.of(genres);
+        }
+        return Optional.empty();
     }
 
     private Optional<Integer> extractKbps(HtmlTableDataCell cell) {
@@ -108,7 +117,7 @@ class RadioStationExtractor {
                 .map(text -> text.replace("\t", "").replace("\n", "").trim())
                 .filter(text -> text.contains(" Kbps"))
                 .findAny()
-                .map(kbpsPattern::matcher)
+                .map(KBPS_PATTERN::matcher)
                 .filter(Matcher::find)
                 .map(m -> m.group("number"))
                 .map(Integer::parseInt);

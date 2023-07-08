@@ -1,6 +1,5 @@
 package com.github.wprusik.radioscrapper;
 
-import com.github.wprusik.radioscrapper.model.MenuCategory;
 import com.github.wprusik.radioscrapper.model.RadioCategory;
 import lombok.RequiredArgsConstructor;
 import org.htmlunit.BrowserVersion;
@@ -54,8 +53,7 @@ public class InternetRadioScrapper {
             clearWorkspace();
         }
         try (WebClient webClient = new WebClient(browserVersion)) {
-            MenuCategory category = new MenuExtractor(webClient, BASE_URL, baseDirectory, delayBetweenDownloadsMillis).getListenCategory();
-            return category.subcategories();
+            return new BaseExtractor(webClient, BASE_URL, baseDirectory, delayBetweenDownloadsMillis).getAllRadioCategories();
         }
     }
 

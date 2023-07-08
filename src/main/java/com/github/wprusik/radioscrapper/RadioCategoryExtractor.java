@@ -10,7 +10,10 @@ import org.htmlunit.html.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -20,6 +23,7 @@ class RadioCategoryExtractor {
     private final WebClient webClient;
     private final String baseUrl;
     private final int delayBetweenDownloads;
+    private final List<String> availableGenres;
 
     @SneakyThrows
     RadioCategory getRadioCategory(String name, String uri) {
@@ -90,7 +94,7 @@ class RadioCategoryExtractor {
         HtmlTableBody tbody = getTableBody(page);
         List<HtmlTableRow> rows = extractRows(tbody);
         List<RadioStation> result = new ArrayList<>();
-        RadioStationExtractor radioStationExtractor = new RadioStationExtractor(webClient, baseUrl);
+        RadioStationExtractor radioStationExtractor = new RadioStationExtractor(webClient, baseUrl, availableGenres);
         for (HtmlTableRow row : rows) {
             radioStationExtractor.extractRadioInfo(row).ifPresent(result::add);
             if (delayBetweenDownloads > 0) {
