@@ -4,6 +4,7 @@ import com.github.wprusik.radioscrapper.InternetRadioScrapper;
 import com.github.wprusik.radioscrapper.model.RadioCategory;
 import com.github.wprusik.radioscrapper.model.RadioStation;
 import lombok.SneakyThrows;
+import org.htmlunit.BrowserVersion;
 
 import java.io.File;
 import java.util.List;
@@ -17,7 +18,7 @@ public class Demo {
     }
 
     private static void fetchTest() {
-        List<RadioCategory> categories = new InternetRadioScrapper(DATA_DIRECTORY, 300).fetchAll();
+        List<RadioCategory> categories = new InternetRadioScrapper(BrowserVersion.CHROME, DATA_DIRECTORY, 100).fetchAll();
         print(categories);
     }
 

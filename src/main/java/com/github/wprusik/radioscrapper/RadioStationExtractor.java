@@ -67,6 +67,7 @@ class RadioStationExtractor {
                 .filter(el -> el instanceof HtmlAnchor)
                 .map(el -> el.getAttribute("href"))
                 .filter(StringUtils::isNotBlank)
+                .filter(s -> s.startsWith("/servers/tools/playlistgenerator"))
                 .map(el -> baseUrl + el)
                 .findAny().orElseThrow();
     }
