@@ -8,7 +8,6 @@ import org.htmlunit.Page;
 import org.htmlunit.WebClient;
 
 import java.io.*;
-import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -17,8 +16,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 class FileDownloader {
 
-    private final WebClient webClient;
+    private static final int FAIL_LIMIT = 20;
 
+    private final WebClient webClient;
     private int failedCount = 0;
 
     @SneakyThrows
@@ -50,19 +50,19 @@ class FileDownloader {
     private Optional<Page> tryToConnect(URL url) throws IOException {
         try {
             return Optional.of(webClient.getPage(url));
-        } catch (ConnectException e) {
-            printWarning(url, e);
-            if (++failedCount > 10) {
-                throw e;
-            }
         } catch (FailingHttpStatusCodeException e) {
             printWarning(url, e);
-            if (++failedCount > 10) {
+            if (++failedCount > FAIL_LIMIT) {
                 throw e;
             }
             if (e.getStatusCode() == 400 && url.toString().contains("http:")) {
                 url = createURL(url.toString().replace("http:", "https:"));
                 return tryToConnect(url);
+            }
+        } catch (IOException e) {
+            printWarning(url, e);
+            if (++failedCount > FAIL_LIMIT) {
+                throw e;
             }
         }
         return Optional.empty();

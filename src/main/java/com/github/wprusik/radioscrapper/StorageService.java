@@ -6,14 +6,14 @@ import com.github.wprusik.radioscrapper.model.RadioCategory;
 import com.github.wprusik.radioscrapper.model.RadioStation;
 import lombok.SneakyThrows;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import javax.xml.bind.DatatypeConverter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 class StorageService {
 
@@ -21,10 +21,14 @@ class StorageService {
 
     private final String baseDirectory;
     private final String playlistDirectory;
+    private final MessageDigest md;
+    private final Map<String, String> fileHashes;
 
     StorageService(String baseDirectory) {
         this.baseDirectory = baseDirectory;
         this.playlistDirectory = baseDirectory + File.separator + "m3u";
+        this.md = createMessageDigest();
+        this.fileHashes = getFileHashes();
     }
 
     @SneakyThrows
@@ -56,13 +60,23 @@ class StorageService {
 
     private RadioStation storeRadioStation(RadioStation station) {
         File file = new File(station.playlistFile());
+        // if file is already in playlist directory, just return
         if (file.getAbsolutePath().startsWith(playlistDirectory)) {
+            saveHash(file);
             return station;
         }
+        // if there is existing playlist with the same file hash, return it
+        String hash = getFileHash(file);
+        String samePlaylistPath = fileHashes.get(hash);
+        if (samePlaylistPath != null && new File(samePlaylistPath).exists()) {
+            return station.toBuilder().playlistFile(samePlaylistPath).build();
+        }
+        // move file to playlist directory
         File targetFile = new File(playlistDirectory + File.separator + file.getName());
         if (!file.renameTo(targetFile)) {
             throw new IllegalStateException();
         }
+        saveHash(targetFile);
         return station.toBuilder().playlistFile(targetFile.getAbsolutePath()).build();
     }
 
@@ -112,5 +126,39 @@ class StorageService {
             }
         }
         return file.delete();
+    }
+
+    private Map<String, String> getFileHashes() {
+        File file = new File(this.playlistDirectory);
+        if (file.exists()) {
+            File[] children = file.listFiles();
+            if (children != null) {
+                return Arrays.stream(children).collect(Collectors.toMap(File::getAbsolutePath, this::getFileHash));
+            }
+            return null;
+        }
+        return new HashMap<>();
+    }
+
+    private String getFileHash(File file) {
+        try (InputStream is = new FileInputStream(file)) {
+            md.update(is.readAllBytes());
+            byte[] digest = md.digest();
+            return DatatypeConverter.printHexBinary(digest).toUpperCase();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void saveHash(File file) {
+        fileHashes.put(getFileHash(file), file.getAbsolutePath());
+    }
+
+    private MessageDigest createMessageDigest() {
+        try {
+            return MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

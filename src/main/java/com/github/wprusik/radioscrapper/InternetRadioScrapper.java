@@ -18,23 +18,13 @@ public class InternetRadioScrapper {
 
     private final BrowserVersion browserVersion;
     private final String baseDirectory;
-    private final int delayBetweenDownloadsMillis;
 
     /**
      * @param baseDirectory - if specified, it saves whole configuration in given directory
      */
     public InternetRadioScrapper(@Nullable String baseDirectory) {
-        this(baseDirectory, 0);
-    }
-
-    /**
-     * @param baseDirectory - if specified, it saves whole configuration in given directory
-     * @param delayBetweenDownloadsMillis - defines delay between single radio station downloads in milliseconds
-     */
-    public InternetRadioScrapper(@Nullable String baseDirectory, int delayBetweenDownloadsMillis) {
-        this.browserVersion = BrowserVersion.FIREFOX;
+        this.browserVersion = BrowserVersion.BEST_SUPPORTED;
         this.baseDirectory = baseDirectory;
-        this.delayBetweenDownloadsMillis = delayBetweenDownloadsMillis;
     }
 
     /**
@@ -52,8 +42,8 @@ public class InternetRadioScrapper {
         if (redownload) {
             clearWorkspace();
         }
-        try (WebClient webClient = new WebClient(browserVersion)) {
-            return new BaseExtractor(webClient, BASE_URL, baseDirectory, delayBetweenDownloadsMillis).getAllRadioCategories();
+        try (WebClient webClient = createWebClient()) {
+            return new BaseExtractor(webClient, BASE_URL, baseDirectory).getAllRadioCategories();
         }
     }
 
@@ -73,5 +63,13 @@ public class InternetRadioScrapper {
             StorageService storageService = new StorageService(baseDirectory);
             storageService.deleteBaseDirectory();
         }
+    }
+
+    private WebClient createWebClient() {
+        WebClient client = new WebClient(browserVersion);
+        client.getOptions().setJavaScriptEnabled(false);
+        client.getOptions().setTimeout(20000);
+        client.getOptions().setCssEnabled(false);
+        return client;
     }
 }
