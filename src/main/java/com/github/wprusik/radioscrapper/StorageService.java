@@ -68,7 +68,7 @@ class StorageService {
         // if there is existing playlist with the same file hash, return it
         String hash = getFileHash(file);
         String samePlaylistPath = fileHashes.get(hash);
-        if (samePlaylistPath != null && new File(samePlaylistPath).exists()) {
+        if (samePlaylistPath != null) {
             return station.toBuilder().playlistFile(samePlaylistPath).build();
         }
         // move file to playlist directory
