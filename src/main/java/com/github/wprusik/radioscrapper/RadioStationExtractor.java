@@ -57,19 +57,20 @@ class RadioStationExtractor {
     }
 
     private Optional<String> fetchPlaylist(HtmlTableDataCell cell) {
-        String url = findM3uURL(cell);
-        return fileDownloader.download(url, "m3u")
+        return findM3uURL(cell)
+                .flatMap(url -> fileDownloader.download(url, "m3u"))
                 .map(File::getAbsolutePath);
     }
 
-    private String findM3uURL(HtmlTableDataCell cell) {
+    private Optional<String> findM3uURL(HtmlTableDataCell cell) {
         return cell.getElementsByAttribute("a", "title", "M3U Playlist File").stream()
                 .filter(el -> el instanceof HtmlAnchor)
                 .map(el -> el.getAttribute("href"))
                 .filter(StringUtils::isNotBlank)
                 .filter(s -> s.startsWith("/servers/tools/playlistgenerator"))
+                .filter(s -> !s.contains("panel.deepradio"))
                 .map(el -> baseUrl + el)
-                .findAny().orElseThrow();
+                .findAny();
     }
 
     private Optional<String> extractRadioName(HtmlTableDataCell cell) {
