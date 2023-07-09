@@ -68,7 +68,7 @@ public class InternetRadioScrapper {
     private WebClient createWebClient() {
         WebClient client = new WebClient(browserVersion);
         client.getOptions().setJavaScriptEnabled(false);
-        client.getOptions().setTimeout(20000);
+        client.getOptions().setTimeout(10000);
         client.getOptions().setCssEnabled(false);
         return client;
     }
