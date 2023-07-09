@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 class FileDownloader {
 
-    private static final int FAIL_LIMIT = 20;
+    private static final int FAIL_LIMIT = 50;
 
     private final WebClient webClient;
     private int failedCount = 0;
