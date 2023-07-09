@@ -4,7 +4,10 @@ import com.github.wprusik.radioscrapper.model.RadioCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.htmlunit.WebClient;
-import org.htmlunit.html.*;
+import org.htmlunit.html.DomNode;
+import org.htmlunit.html.HtmlAnchor;
+import org.htmlunit.html.HtmlElement;
+import org.htmlunit.html.HtmlPage;
 
 import javax.annotation.Nullable;
 import java.util.*;

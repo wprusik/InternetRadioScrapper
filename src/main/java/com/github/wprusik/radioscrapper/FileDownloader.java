@@ -1,5 +1,6 @@
 package com.github.wprusik.radioscrapper;
 
+import com.github.wprusik.radioscrapper.exception.TooManyErrorsException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
@@ -53,7 +54,7 @@ class FileDownloader {
         } catch (FailingHttpStatusCodeException e) {
             printWarning(url, e);
             if (++failedCount > FAIL_LIMIT) {
-                throw e;
+                throw new TooManyErrorsException(e);
             }
             if (e.getStatusCode() == 400 && url.toString().contains("http:")) {
                 url = createURL(url.toString().replace("http:", "https:"));
@@ -62,7 +63,7 @@ class FileDownloader {
         } catch (IOException e) {
             printWarning(url, e);
             if (++failedCount > FAIL_LIMIT) {
-                throw e;
+                throw new TooManyErrorsException(e);
             }
         }
         return Optional.empty();
