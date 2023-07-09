@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.Optional;
+import java.util.concurrent.*;
 
 @RequiredArgsConstructor
 class FileDownloader {
@@ -48,9 +49,11 @@ class FileDownloader {
         }
     }
 
-    private Optional<Page> tryToConnect(URL url) throws IOException {
+    private Optional<Page> tryToConnect(URL url) {
         try {
-            return Optional.of(webClient.getPage(url));
+            URL finalURL = url;
+            Page page = callWithTimeout(() -> webClient.getPage(finalURL));   // due to HtmlUnit bug
+            return Optional.of(page);
         } catch (FailingHttpStatusCodeException e) {
             printWarning(url, e);
             if (++failedCount > FAIL_LIMIT) {
@@ -60,13 +63,25 @@ class FileDownloader {
                 url = createURL(url.toString().replace("http:", "https:"));
                 return tryToConnect(url);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             printWarning(url, e);
             if (++failedCount > FAIL_LIMIT) {
                 throw new TooManyErrorsException(e);
             }
         }
         return Optional.empty();
+    }
+
+    private <T> T callWithTimeout(Callable<T> callable) throws Exception {
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Future<T> future = executor.submit(callable);
+        executor.shutdown();
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Throwable e) {
+            future.cancel(true);
+            throw e;
+        }
     }
 
     private void printWarning(URL url, Throwable e) {
