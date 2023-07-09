@@ -1,4 +1,4 @@
-# InternetRadioScrapper
+# internet-radio-scrapper
 
 A scrapper for website [internet-radio.com](https://internet-radio.com).
 
