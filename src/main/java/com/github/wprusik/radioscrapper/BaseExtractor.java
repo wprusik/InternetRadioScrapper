@@ -3,6 +3,7 @@ package com.github.wprusik.radioscrapper;
 import com.github.wprusik.radioscrapper.model.RadioCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.htmlunit.WebClient;
 import org.htmlunit.html.DomNode;
 import org.htmlunit.html.HtmlAnchor;
@@ -14,6 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 @RequiredArgsConstructor
 class BaseExtractor {
 
@@ -41,12 +43,11 @@ class BaseExtractor {
         List<RadioCategory> categories = storageService != null ? storageService.load() : new ArrayList<>();
         List<String> genres = categoryLinks.keySet().stream().sorted(Comparator.comparingInt(String::length).reversed()).toList();
         RadioCategoryExtractor radioCategoryExtractor = new RadioCategoryExtractor(webClient, baseUrl, genres);
-
-        System.out.println("Loaded radio categories: " + categories.size() + "/" + genres.size());
+        log.debug("Loaded radio categories: {}/{}", categories.size(), genres.size());
 
         for (Map.Entry<String, String> entry : categoryLinks.entrySet()) {
             if (isMissing(categories, entry.getKey())) {
-                System.out.printf("\nRetrieving radio category %d/%d: %s\n", (categories.size() + 1), genres.size(), entry.getKey());
+                log.debug("Retrieving radio category {}/{}: {}", (categories.size() + 1), genres.size(), entry.getKey());
                 RadioCategory category = fetchRadioCategory(radioCategoryExtractor, entry.getKey(), entry.getValue());
                 categories.add(category);
                 store(categories);

@@ -4,6 +4,7 @@ import com.github.wprusik.radioscrapper.model.RadioCategory;
 import com.github.wprusik.radioscrapper.model.RadioStation;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.htmlunit.WebClient;
 import org.htmlunit.html.*;
 
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 @RequiredArgsConstructor
 class RadioCategoryExtractor {
 
@@ -31,7 +33,7 @@ class RadioCategoryExtractor {
         String description = extractDescription(page);
         List<HtmlPage> pages = getPages(page);
 
-        System.out.println("Found " + pages.size() + " pages:");
+        log.debug("Found {} pages", pages.size());
         AtomicInteger pageNumber = new AtomicInteger(0);
 
         List<RadioStation> stations = pages.stream()
@@ -99,11 +101,10 @@ class RadioCategoryExtractor {
         List<HtmlTableRow> rows = extractRows(tbody);
         List<RadioStation> result = new ArrayList<>();
         RadioStationExtractor radioStationExtractor = new RadioStationExtractor(webClient, baseUrl, availableGenres);
-
-        System.out.println("\tPage " + pageNumber + "/" + pagesCount);
+        log.debug("Processing page {}/{}", pageNumber, pagesCount);
 
         for (int i = 0; i < rows.size(); i++) {
-            System.out.println("\t\tRetrieving station " + (i + 1) + "/" + rows.size());
+            log.debug("Retrieving station {}/{}", (i + 1), rows.size());
             radioStationExtractor.extractRadioInfo(rows.get(i)).ifPresent(result::add);
         }
         return result;

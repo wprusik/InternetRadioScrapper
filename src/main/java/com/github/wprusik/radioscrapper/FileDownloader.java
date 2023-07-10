@@ -3,6 +3,7 @@ package com.github.wprusik.radioscrapper;
 import com.github.wprusik.radioscrapper.exception.TooManyErrorsException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.htmlunit.FailingHttpStatusCodeException;
 import org.htmlunit.Page;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.*;
 
+@Slf4j
 @RequiredArgsConstructor
 class FileDownloader {
 
@@ -55,19 +57,13 @@ class FileDownloader {
             Page page = callWithTimeout(() -> webClient.getPage(finalURL));   // due to HtmlUnit bug
             return Optional.of(page);
         } catch (FailingHttpStatusCodeException e) {
-            printWarning(url, e);
-            if (++failedCount > FAIL_LIMIT) {
-                throw new TooManyErrorsException(e);
-            }
+            handleFail(e, url);
             if (e.getStatusCode() == 400 && url.toString().contains("http:")) {
                 url = createURL(url.toString().replace("http:", "https:"));
                 return tryToConnect(url);
             }
         } catch (Exception e) {
-            printWarning(url, e);
-            if (++failedCount > FAIL_LIMIT) {
-                throw new TooManyErrorsException(e);
-            }
+            handleFail(e, url);
         }
         return Optional.empty();
     }
@@ -84,8 +80,12 @@ class FileDownloader {
         }
     }
 
-    private void printWarning(URL url, Throwable e) {
-        System.out.printf("\n\u001B[31mWARNING: UNABLE TO DOWNLOAD FILE FROM URL: '%s'\nException: %s\u001B[0m\n\n", url, e.getMessage());
+    private void handleFail(Exception e, URL url) throws TooManyErrorsException {
+        log.warn("Unable to download file from URL " + url, e);
+        if (++failedCount > FAIL_LIMIT) {
+            log.error("The number of errors exceeded the allowable limit of " + FAIL_LIMIT);
+            throw new TooManyErrorsException(e);
+        }
     }
 
     private URL createURL(String url) {
